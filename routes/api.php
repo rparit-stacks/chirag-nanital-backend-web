@@ -253,7 +253,7 @@ Route::prefix('product-faqs')->name('product_faqs.')->group(function () {
 // featured sections
 Route::prefix('featured-sections')->name('featured-sections.')->group(function () {
     Route::get('/', [FeaturedSectionApiController::class, 'index'])->name('index');
-    Route::get('/search', [FeaturedSectionApiController::class, 'search'])->name('index');
+    Route::get('/search', [FeaturedSectionApiController::class, 'search'])->name('search');
     Route::get('/all', [FeaturedSectionApiController::class, 'all'])->name('all');
     Route::get('/types', [FeaturedSectionApiController::class, 'types'])->name('types');
     Route::get('/{slug}', [FeaturedSectionApiController::class, 'show'])->name('show');
