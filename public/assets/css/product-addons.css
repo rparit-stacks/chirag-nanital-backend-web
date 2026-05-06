@@ -1,0 +1,98 @@
+/* Seller :: Product Addon Attachments
+ * Styles for the stores × items matrix on the attach/edit form.
+ */
+
+.store-accordion {
+    border: 1px solid var(--tblr-border-color, #e2e8f0);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.store-accordion + .store-accordion {
+    margin-top: 10px;
+}
+
+.store-accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: var(--tblr-bg-surface-tertiary, #f8fafc);
+    transition: background .15s ease;
+}
+
+.store-accordion-header:hover {
+    background: var(--tblr-bg-surface-secondary, #eef2f7);
+}
+
+.store-accordion.is-applied .store-accordion-header {
+    background: var(--tblr-primary-lt, #eef4fb);
+}
+
+.store-accordion-body {
+    padding: 14px 18px;
+    background: #fff;
+    border-top: 1px solid var(--tblr-border-color, #e2e8f0);
+}
+
+.store-accordion-body.collapsed {
+    display: none;
+}
+
+.store-accordion.is-disabled .store-accordion-body {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.store-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: var(--tblr-bg-surface-tertiary, #f1f5f9);
+    color: var(--tblr-secondary, #64748b);
+}
+
+.addon-item-compact-row td {
+    vertical-align: middle;
+}
+
+.addon-item-compact-row input.form-control {
+    max-width: 130px;
+}
+
+.default-hint {
+    font-size: 11px;
+    color: var(--tblr-secondary, #64748b);
+}
+
+.picker-summary-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--tblr-border-color, #e2e8f0);
+    border-radius: 10px;
+    background: var(--tblr-bg-surface-tertiary, #f8fafc);
+}
+
+.picker-summary-card > div {
+    flex: 1;
+    min-width: 180px;
+}
+
+.picker-summary-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--tblr-secondary, #64748b);
+    letter-spacing: .04em;
+}
+
+.picker-summary-card .value {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--tblr-dark, #1f2937);
+}

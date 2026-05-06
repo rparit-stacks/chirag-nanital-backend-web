@@ -1,0 +1,54 @@
+/* Seller :: Addon Groups
+ * Styles for the single-page addon group create/edit form.
+ */
+
+.addon-item-row {
+    transition: background-color .15s ease;
+}
+
+.addon-item-row:hover {
+    background-color: var(--tblr-bg-surface-tertiary, #f8fafc);
+}
+
+.addon-item-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--tblr-bg-surface-tertiary, #f1f5f9);
+    color: var(--tblr-secondary, #64748b);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.addon-empty-state {
+    border: 2px dashed var(--tblr-border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--tblr-secondary, #64748b);
+}
+
+.selection-type-card {
+    border: 1px solid var(--tblr-border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all .15s ease;
+    height: 100%;
+}
+
+.selection-type-card:hover {
+    border-color: var(--tblr-primary, #206bc4);
+}
+
+.selection-type-card .form-check {
+    margin-bottom: 0;
+}
+
+.selection-type-card.is-selected {
+    border-color: var(--tblr-primary, #206bc4);
+    background-color: var(--tblr-primary-lt, #eef4fb);
+}

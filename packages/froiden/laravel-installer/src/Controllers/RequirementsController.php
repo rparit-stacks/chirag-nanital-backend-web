@@ -1,0 +1,54 @@
+<?php
+
+namespace Froiden\LaravelInstaller\Controllers;
+
+use Illuminate\Routing\Controller;
+use Froiden\LaravelInstaller\Helpers\RequirementsChecker;
+
+class RequirementsController extends Controller
+{
+
+    /**
+     * @var RequirementsChecker
+     */
+    protected $requirements;
+
+    /**
+     * @param RequirementsChecker $checker
+     */
+    public function __construct(RequirementsChecker $checker)
+    {
+        $this->requirements = $checker;
+    }
+
+    /**
+     * Display the requirements page.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function requirements()
+    {
+        $phpSupportInfo = $this->requirements->checkPHPversion(
+            config('installer.core.minPhpVersion')
+        );
+
+        $requirements = $this->requirements->check(
+            config('installer.requirements')
+        );
+
+        $functions = $this->requirements->checkFunctions(
+            (array) config('installer.functions', [])
+        );
+
+        $iniSettings = $this->requirements->checkIniSettings(
+            (array) config('installer.ini_settings', [])
+        );
+
+        return view('vendor.installer.requirements', compact(
+            'requirements',
+            'phpSupportInfo',
+            'functions',
+            'iniSettings'
+        ));
+    }
+}

@@ -1,0 +1,66 @@
+/* Seller panel — Store addon inventory: bulk add page */
+
+.sai-stores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: .5rem;
+}
+
+.sai-store-chip {
+    margin: 0;
+}
+
+.sai-store-chip .form-selectgroup-label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    padding: .6rem .75rem;
+    width: 100%;
+}
+
+.sai-store-chip .form-selectgroup-input:checked + .form-selectgroup-label {
+    border-color: var(--tblr-primary);
+    background-color: rgba(var(--tblr-primary-rgb), .08);
+    color: var(--tblr-primary);
+}
+
+.sai-rows-wrapper .table {
+    margin-bottom: 0;
+}
+
+.sai-rows-wrapper .table > :not(caption) > * > * {
+    vertical-align: middle;
+}
+
+.sai-row.sai-row-has-existing {
+    background-color: rgba(var(--tblr-info-rgb), .04);
+}
+
+.sai-row-status {
+    line-height: 1;
+}
+
+#sai-impact-hint {
+    line-height: 1.2;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    #sai-rows-grid thead {
+        display: none;
+    }
+
+    #sai-rows-grid tbody td {
+        display: block;
+        width: 100% !important;
+        border: 0;
+        padding: .25rem 0;
+    }
+
+    #sai-rows-grid tbody tr {
+        display: block;
+        border-top: 1px solid var(--tblr-border-color);
+        padding: .5rem 0;
+    }
+}
