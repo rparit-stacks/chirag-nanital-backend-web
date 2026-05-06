@@ -281,7 +281,7 @@ Route::get('paystack/callback', [PaystackController::class, 'handleCallback'])->
 Route::post('paystack/refund', [PaystackController::class, 'refundPayment']);
 
 
-Route::post('flutterwave/webhook', [FlutterwaveController::class, 'handleWebhook'])->name('flutterwave.webhook');;
+Route::post('flutterwave/webhook', [FlutterwaveController::class, 'handleWebhook'])->name('flutterwave.webhook');
 
 Route::post('/test-fcm', [NotificationController::class, 'test']);
 Route::post('/test-fcms', [NotificationController::class, 'sendBulk']);
