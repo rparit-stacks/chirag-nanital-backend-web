@@ -98,8 +98,9 @@ class AppServiceProvider extends ServiceProvider
         // API docs security
         $this->configureScramble();
 
-        // Force HTTPS in production
-        $this->forceHttpsInProduction();
+        // Match generated URLs to APP_URL (http vs https). Stops reverse-proxy / X-Forwarded-Proto
+        // from upgrading links to https when license is registered on http://
+        $this->syncUrlSchemeWithAppUrl();
 
         // Register model observers safely
         $this->registerObservers();
@@ -174,19 +175,17 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Force HTTPS scheme in production when APP_URL is explicitly https.
-     * If the app runs on http (e.g. license bound to http://domain), forcing https
-     * breaks url('/') and license signature checks.
+     * Align url()/asset() scheme with APP_URL so http:// licenses and plain HTTP deploys work.
+     * When behind Nginx+SSL, X-Forwarded-Proto can otherwise force https in generated URLs.
      */
-    private function forceHttpsInProduction(): void
+    private function syncUrlSchemeWithAppUrl(): void
     {
-        if (!$this->app->environment('production')) {
-            return;
-        }
-
         $url = (string) config('app.url', '');
+
         if (str_starts_with($url, 'https://')) {
             URL::forceScheme('https');
+        } elseif (str_starts_with($url, 'http://')) {
+            URL::forceScheme('http');
         }
     }
 
