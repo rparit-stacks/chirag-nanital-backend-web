@@ -9,6 +9,12 @@
     </style>
 @endsection
 @section('container')
+    @php
+        $licenseDomain = rtrim((string) config('app.url', ''), '/');
+        if ($licenseDomain === '') {
+            $licenseDomain = request()->getSchemeAndHttpHost();
+        }
+    @endphp
     <form method="post" action="{{ route('LaravelInstaller::license.verify') }}" id="license-form">
         <div class="form-group">
             <label class="col-sm-2 control-label">Purchase Code</label>
@@ -19,7 +25,7 @@
         <div class="form-group">
             <label class="col-sm-2 control-label">Domain URL</label>
             <div class="col-sm-12">
-                <input type="text" name="domain_url" class="form-control" value="{{ request()->getSchemeAndHttpHost() }}" readonly>
+                <input type="text" name="domain_url" class="form-control" value="{{ $licenseDomain }}" readonly>
                 <small>This URL will be bound to your license.</small>
             </div>
         </div>
