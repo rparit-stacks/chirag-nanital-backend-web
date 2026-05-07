@@ -174,11 +174,18 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Force HTTPS scheme in production environment.
+     * Force HTTPS scheme in production when APP_URL is explicitly https.
+     * If the app runs on http (e.g. license bound to http://domain), forcing https
+     * breaks url('/') and license signature checks.
      */
     private function forceHttpsInProduction(): void
     {
-        if ($this->app->environment('production')) {
+        if (!$this->app->environment('production')) {
+            return;
+        }
+
+        $url = (string) config('app.url', '');
+        if (str_starts_with($url, 'https://')) {
             URL::forceScheme('https');
         }
     }
