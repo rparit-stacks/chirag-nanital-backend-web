@@ -9,6 +9,9 @@ const panel = document.getElementById('panel') ? document.getElementById('panel'
 if (typeof axios !== 'undefined') {
     axios.defaults.withCredentials = true;
     axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    // Laravel encrypts XSRF-TOKEN cookie; axios sends X-XSRF-TOKEN — required alongside meta/_token for reliable CSRF
+    axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+    axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 }
 
 const root = getComputedStyle(document.documentElement);
@@ -132,30 +135,23 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const action = loginForm.getAttribute('action');
-        const formData = new FormData(loginForm);
         const submitButton = loginForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         const originalButtonContent = submitButton.innerHTML;
         submitButton.innerHTML = `<div class="spinner-border text-white me-2" role="status"><span class="visually-hidden">Loading...</span></div> ${originalButtonContent}`;
 
+        const token = getCsrfToken();
+        const params = new URLSearchParams(new FormData(loginForm));
 
-        // Prepare headers (explicit CSRF + body _token for Laravel)
-        const headers = {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': getCsrfToken(),
-        };
-
-        // Prepare axios config
-        const config = {
-            method: 'POST',
-            url: action,
-            headers: headers,
+        axios.post(action, params, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-TOKEN': token,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
             withCredentials: true,
-        };
-        config.data = formData;
-
-        axios(config)
+        })
             .then(function (response) {
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonContent;
