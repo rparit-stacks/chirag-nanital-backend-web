@@ -19,8 +19,8 @@ use App\Services\SettingService;
 use App\Enums\SettingTypeEnum;
 
 
-include_once("admin-route.php");
-include_once("seller-route.php");
+include_once __DIR__ . '/admin-route.php';
+include_once __DIR__ . '/seller-route.php';
 
 // Route to run reward settlement command
 Route::get('/reward-settlement', function () {

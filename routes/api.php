@@ -36,8 +36,8 @@ use App\Http\Controllers\Payments\StripeController;
 use Illuminate\Support\Facades\Route;
 use function Pest\Laravel\get;
 
-include_once("delivery-boy-api.php");
-include_once("seller-api.php");
+include_once __DIR__ . '/delivery-boy-api.php';
+include_once __DIR__ . '/seller-api.php';
 
 // User Auth Routes
 Route::post('register', [AuthApiController::class, 'register'])->name('register');
