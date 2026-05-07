@@ -284,34 +284,12 @@
         </div>
     </div>
     <style>
-        #map {
-            height: 400px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .form-row {
-            margin-bottom: 8px;
-        }
-
-        /* Additional styles for the city selector inside map */
-        #city-selector-card gmp-place-autocomplete {
-            width: 100%;
-        }
-
-        #infowindow-content .title {
-            font-weight: bold;
-        }
-
-        #map #infowindow-content {
-            display: inline;
-        }
+        #map { height: 400px; width: 100%; margin-bottom: 20px; }
+        .form-row { margin-bottom: 8px; }
     </style>
 @endsection
 @push('scripts')
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key={{$googleApiKey}}&libraries=maps,places,marker&callback=initMap"
-        async defer>
-    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ hyperAsset('assets/js/stores.js')}}"></script>
 @endpush

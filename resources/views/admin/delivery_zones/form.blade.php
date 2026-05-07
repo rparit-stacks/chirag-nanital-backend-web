@@ -47,36 +47,7 @@
     <div class="page-body">
         <div class="row row-cards">
             <div class="col-12">
-                @if(!$googleApiKey)
-                    <div class="alert alert-danger alert-dismissible" role="alert">
-                        <div class="alert-icon">
-                            <!-- Download SVG icon from http://tabler.io/icons/icon/alert-circle -->
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="icon alert-icon icon-2"
-                            >
-                                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
-                                <path d="M12 8v4"/>
-                                <path d="M12 16h.01"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="alert-heading"><a
-                                    href="{{route('admin.settings.show', ['setting' => \App\Enums\SettingTypeEnum::AUTHENTICATION()])}}"
-                                    target="_blank"> {{__('messages.google_api_key_not_found')}} </a>
-                            </h4>
-                        </div>
-                        <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-                    </div>
-                @endif
+                {{-- Map uses Leaflet + OpenStreetMap — no Google API key needed --}}
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">{{ __('labels.select_delivery_zones') }}</h3>
@@ -468,49 +439,12 @@
     </div>
 @endsection
 <style>
-    #place-autocomplete-card {
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-        margin: 10px;
-        padding: 5px;
-        font-family: Roboto, sans-serif;
-        font-size: large;
-        font-weight: bold;
-    }
-
-    gmp-place-autocomplete {
-        width: 300px;
-    }
-
-    #infowindow-content .title {
-        font-weight: bold;
-    }
-
-    #map #infowindow-content {
-        display: inline;
-    }
+    #map { height: 500px; }
 </style>
 @push('script')
-    <script async defer>(g => {
-            var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__",
-                m = document, b = window;
-            b = b[c] || (b[c] = {});
-            var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
-                u = () => h || (h = new Promise(async (f, n) => {
-                    await (a = m.createElement("script"));
-                    e.set("libraries", [...r] + "");
-                    for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-                    e.set("callback", c + ".maps." + q);
-                    a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-                    d[q] = f;
-                    a.onerror = () => h = n(Error(p + " could not load."));
-                    a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-                    m.head.append(a)
-                }));
-            d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
-        })
-        ({key: "{{$googleApiKey}}", v: "weekly"});
-    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="{{ hyperAsset('assets/js/delivery-zone.js') }}"></script>
 @endpush
