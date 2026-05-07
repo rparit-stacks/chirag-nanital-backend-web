@@ -98,8 +98,7 @@ class AppServiceProvider extends ServiceProvider
         // API docs security
         $this->configureScramble();
 
-        // Match generated URLs to APP_URL (http vs https). Stops reverse-proxy / X-Forwarded-Proto
-        // from upgrading links to https when license is registered on http://
+        // Only force https when APP_URL is https; never force http (avoids mixed-content / missing CSS on https pages).
         $this->syncUrlSchemeWithAppUrl();
 
         // Register model observers safely
@@ -175,8 +174,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Align url()/asset() scheme with APP_URL so http:// licenses and plain HTTP deploys work.
-     * When behind Nginx+SSL, X-Forwarded-Proto can otherwise force https in generated URLs.
+     * Only force https when APP_URL uses https. Do not force http — that breaks CSS when users still open the site over https.
      */
     private function syncUrlSchemeWithAppUrl(): void
     {
@@ -184,8 +182,6 @@ class AppServiceProvider extends ServiceProvider
 
         if (str_starts_with($url, 'https://')) {
             URL::forceScheme('https');
-        } elseif (str_starts_with($url, 'http://')) {
-            URL::forceScheme('http');
         }
     }
 
