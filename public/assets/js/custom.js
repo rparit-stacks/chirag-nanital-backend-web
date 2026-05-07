@@ -767,6 +767,8 @@ document.addEventListener("DOMContentLoaded", function () {
             valueField: "value",
             labelField: "text",
             searchField: "text",
+            // Load options on init (TomSelect calls load('')) so the list is not empty until user types
+            preload: true,
             placeholder: "USD, EUR, INR, etc.",
             render: {
                 item: function (data, escape) {
