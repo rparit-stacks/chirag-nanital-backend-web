@@ -34,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
     // Register application and package service providers (Laravel 11/12 style)
     ->withProviders(require __DIR__ . '/providers.php')
     ->withMiddleware(function (Middleware $middleware) {
+        // Nginx/SSL in front of php artisan serve: trust X-Forwarded-Proto so
+        // request()->getScheme() is https and license domain matches APP_URL.
+        $middleware->trustProxies(at: '*');
+
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('admin/*') || $request->is('admin')) {
                 return route('admin.login');

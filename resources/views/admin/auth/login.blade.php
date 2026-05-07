@@ -46,6 +46,7 @@
                 </div>
                 <div class="card card-md">
                     <div class="card-body">
+                        @include('layouts.partials._alerts')
                         <h2 class="h2 text-center mb-4">Login to your account</h2>
                         <form id="login-form" action="{{route('admin.login.post')}}" method="post"
                               autocomplete="off" novalidate>

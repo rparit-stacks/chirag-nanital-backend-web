@@ -17,7 +17,9 @@ class VerifyLicense
         }
 
         $purchase = config('app.license_purchase');
-        $domain = url('/');
+        // Must match LicenseRevalidateController::verify() which signs getSchemeAndHttpHost()
+        // (not url('/') — trailing slash / normalization differs and breaks hash_equals).
+        $domain = $request->getSchemeAndHttpHost();
         $token = config('app.license_token');
         $signature = config('app.license_signature');
 
@@ -27,8 +29,7 @@ class VerifyLicense
             return redirect()->route('license.revalidate', ['intended' => $intended, 'message' => 'Application is not licensed.']);
         }
 
-        // Verify signature integrity to make tampering harder
-        $domain = str_replace('/public', '', $domain);
+        // Verify signature integrity to match how LICENSE_SIGNATURE was generated on license verify.
         $expected = LicenseValidator::signature($purchase, $domain, $token);
 
         if (hash_equals($expected, (string)$signature) !== true) {

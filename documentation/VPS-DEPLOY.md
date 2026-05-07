@@ -177,3 +177,20 @@ sudo systemctl restart hyperlocal-queue
 ## Production note
 
 Long-term **`php artisan serve`** ko replace karna better hai **PHP-FPM + Nginx** se (performance). Tab `hyperlocal-serve.service` disable karke FPM listen karo.
+
+---
+
+## 13) Currency dropdown (`/admin/settings/system`) — migrate ≠ data
+
+- **`php artisan migrate`** sirf **`countries` table ka structure** banata hai — **rows / ISO list automatically nahi aati**.
+- Dropdown TomSelect **`GET /currency`** se load hota hai, jo **`countries` table** se `currency` + `currency_symbol` padhta hai.
+- Rows **`CountriesSeeder`** se aati hain (`database/seeders/CountriesSeeder.php`). Ye **`DatabaseSeeder`** ke through web installer ke DB step par chal sakti hai, ya manually:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\CountriesSeeder
+# ya
+php artisan db:seed --class=CountriesSeeder
+```
+
+- Agar pehle dropdown mein search/type karke data aa raha tha aur ab API **`[]`** de rahi ho to **`SELECT COUNT(*) FROM countries;`** check karo — **0 / bahut kam** ho to seed dubara chalao (duplicate ids `insertOrIgnore` se skip ho jati hain).
+- System settings validation (`SystemSettingType`) mein **`exists:countries,currency`** hai — matlab save bhi **`countries`** data par depend karta hai.

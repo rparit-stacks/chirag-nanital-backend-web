@@ -20,6 +20,7 @@ use App\Services\SettingService;
 use App\Enums\SettingTypeEnum;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Hash;
@@ -229,9 +230,29 @@ trait AuthTrait
     }
 
     /**
+     * Browser form login (no XHR): uses session cookies + CSRF reliably.
+     * Apps / axios keep sending Accept: application/json or X-Requested-With.
+     */
+    protected function isLoginApiStyle(Request $request): bool
+    {
+        return $request->ajax() || $request->wantsJson();
+    }
+
+    protected function dashboardRouteAfterLogin(): string
+    {
+        $role = property_exists($this, 'role') ? $this->role : null;
+
+        return match ($role) {
+            'seller' => route('seller.dashboard'),
+            'admin' => route('admin.dashboard'),
+            default => '/',
+        };
+    }
+
+    /**
      * Login
      */
-    public function login(Request $request): JsonResponse
+    public function login(Request $request): JsonResponse|RedirectResponse
     {
         try {
             // 1) Validate input
@@ -250,11 +271,22 @@ trait AuthTrait
             // 3) Optional role-based access check (admin/seller)
             $role = property_exists($this, 'role') ? $this->role : null;
             if ($response = $this->checkRoleAccess($role, $identifierField, $identifierValue)) {
+                if (! $this->isLoginApiStyle($request)) {
+                    $payload = $response->getData(true);
+                    $message = is_array($payload) ? (string) ($payload['message'] ?? __('labels.invalid_credentials')) : __('labels.invalid_credentials');
+
+                    return back()->withErrors(['email' => $message])->withInput($request->except('password'));
+                }
+
                 return $response;
             }
 
             // 4) Attempt authentication
-            if (!$this->attemptAuthentication($credentials)) {
+            if (! $this->attemptAuthentication($credentials)) {
+                if (! $this->isLoginApiStyle($request)) {
+                    return back()->withErrors(['email' => __('labels.invalid_credentials')])->withInput($request->except('password'));
+                }
+
                 return ApiResponseType::sendJsonResponse(
                     success: false,
                     message: __('labels.invalid_credentials'),
@@ -262,15 +294,34 @@ trait AuthTrait
                 );
             }
 
-            // 5) Finalize login response
+            // 5) Web: full page redirect (session CSRF already validated); API-style: JSON + token
+            if (! $this->isLoginApiStyle($request)) {
+                $request->session()->regenerate();
+                $user = $request->user();
+                if ($user) {
+                    $this->storeFcmToken($request, $user);
+                    event(new UserLoggedIn($user));
+                }
+
+                return redirect()->intended($this->dashboardRouteAfterLogin());
+            }
+
             return $this->finalizeLogin($request);
         } catch (ValidationException $e) {
+            if (! $this->isLoginApiStyle($request)) {
+                throw $e;
+            }
+
             return ApiResponseType::sendJsonResponse(
                 success: false,
                 message: __('labels.validation_error') . ":- " . $e->getMessage(),
                 data: []
             );
         } catch (\Exception $e) {
+            if (! $this->isLoginApiStyle($request)) {
+                return back()->withErrors(['email' => __('labels.login_failed', ['error' => $e->getMessage()])])->withInput($request->except('password'));
+            }
+
             return ApiResponseType::sendJsonResponse(
                 success: false,
                 message: __('labels.login_failed', ['error' => $e->getMessage()]),
