@@ -23,6 +23,7 @@ class CountryController extends \Illuminate\Routing\Controller
                         ->orWhere('phonecode', 'like', "%$query%");
                 });
             })
+                ->orderBy('name')
                 ->limit(20)
                 ->get();
         }
@@ -55,6 +56,7 @@ class CountryController extends \Illuminate\Routing\Controller
                         ->orWhere('phonecode', 'like', "%$query%");
                 });
             })
+                ->orderBy('currency')
                 ->limit(20)
                 ->get();
         }

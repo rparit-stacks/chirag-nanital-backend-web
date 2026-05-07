@@ -733,8 +733,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
             },
             load: function (query, callback) {
-                if (!query.length) return callback();
-                let url = base_url + "/countries?search=" + encodeURIComponent(query);
+                let url = base_url + "/countries?search=" + encodeURIComponent(query || "");
                 fetch(url)
                     .then(response => response.json())
                     .then(json => {
@@ -771,7 +770,8 @@ document.addEventListener("DOMContentLoaded", function () {
             placeholder: "USD, EUR, INR, etc.",
             render: {
                 item: function (data, escape) {
-                    document.getElementById('currency-symbol').value = data.currency_symbol;
+                    const currencySymEl = document.getElementById('currency-symbol');
+                    if (currencySymEl) currencySymEl.value = data.currency_symbol;
                     if (data.customProperties) {
                         return '<div><span class="dropdown-item-indicator">' + data.customProperties + "</span>" + escape(data.text) + "</div>";
                     }
@@ -785,8 +785,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
             },
             load: function (query, callback) {
-                if (!query.length) return callback();
-                let url = base_url + "/currency?search=" + encodeURIComponent(query);
+                let url = base_url + "/currency?search=" + encodeURIComponent(query || "");
                 axios.get(url)
                     .then(response => {
                         callback(response.data);
