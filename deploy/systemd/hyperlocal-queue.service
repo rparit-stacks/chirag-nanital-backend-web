@@ -1,0 +1,18 @@
+[Unit]
+Description=Hyperlocal Laravel queue worker
+After=network.target mysql.service hyperlocal-serve.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/hyperlocal/chirag-nanital-backend-web
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hyperlocal-queue
+
+[Install]
+WantedBy=multi-user.target
