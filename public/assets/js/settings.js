@@ -1,189 +1,165 @@
+// Default location map — Leaflet + Nominatim (no Google Maps API key needed)
+
 let defaultLocationMap;
 let defaultLocationMarker;
-let defaultLocationInfoWindow;
-let defaultLocationCenter = {lat: 40.749933, lng: -73.98633}; // Default center: NYC
 
-async function initDefaultLocationMap() {
-    // Load needed libraries (marker, places, drawing)
-    const [{Map}, {AdvancedMarkerElement}] = await Promise.all([
-        google.maps.importLibrary("maps"),
-        google.maps.importLibrary("marker"),
-        google.maps.importLibrary("places")
-    ]);
+const DEFAULT_CENTER = [20.5937, 78.9629]; // India center
 
-    // Get existing coordinates if available
-    const latInput = document.getElementById('default-latitude');
-    const lngInput = document.getElementById('default-longitude');
-    if (latInput.value && lngInput.value) {
-        defaultLocationCenter = {
-            lat: parseFloat(latInput.value),
-            lng: parseFloat(lngInput.value)
-        };
-    }
+function initDefaultLocationMap() {
+    const latEl = document.getElementById('default-latitude');
+    const lngEl = document.getElementById('default-longitude');
 
-    // Initialize map
-    defaultLocationMap = new google.maps.Map(document.getElementById('default-location-map'), {
-        center: defaultLocationCenter,
-        zoom: 13,
-        mapId: '4504f8b37365c3d0',
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        gestureHandling: 'cooperative'
+    const hasExisting = latEl?.value && lngEl?.value;
+    const startCenter = hasExisting
+        ? [parseFloat(latEl.value), parseFloat(lngEl.value)]
+        : DEFAULT_CENTER;
+    const startZoom = hasExisting ? 14 : 5;
+
+    // ── Init map ────────────────────────────────────────────────────────────
+    defaultLocationMap = L.map('default-location-map').setView(startCenter, startZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(defaultLocationMap);
+
+    // ── Draggable marker ────────────────────────────────────────────────────
+    defaultLocationMarker = L.marker(startCenter, { draggable: true })
+        .addTo(defaultLocationMap);
+
+    defaultLocationMarker.on('dragend', async () => {
+        const { lat, lng } = defaultLocationMarker.getLatLng();
+        await reverseAndShow(lat, lng);
     });
 
-    // Place Autocomplete
-    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement();
-    placeAutocomplete.id = 'place-autocomplete-input';
-    placeAutocomplete.placeholder = "search location";
-    placeAutocomplete.locationBias = defaultLocationCenter;
-    const card = document.getElementById('place-autocomplete-card');
-    card.appendChild(placeAutocomplete);
-    defaultLocationMap.controls[google.maps.ControlPosition.TOP_LEFT].push(card);
-
-    // Initialize marker with proper draggable configuration
-    defaultLocationMarker = new google.maps.marker.AdvancedMarkerElement({
-        map: defaultLocationMap,
-        position: defaultLocationCenter,
-        gmpDraggable: true,
-        title: 'Default Location'
+    defaultLocationMap.on('click', async e => {
+        defaultLocationMarker.setLatLng(e.latlng);
+        await reverseAndShow(e.latlng.lat, e.latlng.lng);
     });
 
-    defaultLocationInfoWindow = new google.maps.InfoWindow({});
-
-    // Get selected countries for restriction
-    const selectedCountries = Array.from(document.querySelectorAll('#select-countries option:checked')).map(option => option.value);
-    if (selectedCountries.length > 0) {
-        // Use the proper method for setting country restrictions in the new API
-        placeAutocomplete.countries = selectedCountries;
-    }
-
-    // Handle place selection
-    placeAutocomplete.addEventListener('gmp-select', async ({placePrediction}) => {
-        const place = placePrediction.toPlace();
-        await place.fetchFields({fields: ['displayName', 'formattedAddress', 'location']});
-
-        if (place.viewport) {
-            defaultLocationMap.fitBounds(place.viewport);
-        } else {
-            defaultLocationMap.setCenter(place.location);
-            defaultLocationMap.setZoom(17);
-        }
-
-        let content = `<div id="infowindow-content">
-                    <span id="place-displayname" class="title">${place.displayName}</span><br />
-                    <span id="place-address">${place.formattedAddress}</span>
+    // ── Search control ──────────────────────────────────────────────────────
+    const SearchControl = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd() {
+            const wrapper = L.DomUtil.create('div');
+            wrapper.innerHTML = `
+                <div style="background:#fff;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.25);padding:8px;width:280px;">
+                    <input id="settings-search-input" type="text" placeholder="Search location…"
+                        style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ddd;
+                               border-radius:4px;font-size:13px;outline:none;" />
+                    <ul id="settings-suggestions"
+                        style="list-style:none;margin:4px 0 0;padding:0;max-height:200px;overflow-y:auto;
+                               border:1px solid #e5e5e5;border-radius:4px;display:none;background:#fff;
+                               position:absolute;z-index:9999;width:264px;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+                    </ul>
                 </div>`;
+            L.DomEvent.disableClickPropagation(wrapper);
+            L.DomEvent.disableScrollPropagation(wrapper);
+            return wrapper;
+        },
+    });
+    defaultLocationMap.addControl(new SearchControl());
 
-        updateDefaultLocationInfoWindow(content, place.location);
-        defaultLocationMarker.position = place.location;
+    const searchInput = document.getElementById('settings-search-input');
+    const suggestions = document.getElementById('settings-suggestions');
+    let searchTimer;
 
-        // Update coordinate inputs
-        document.getElementById('default-latitude').value = place.location.lat();
-        document.getElementById('default-longitude').value = place.location.lng();
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const q = searchInput.value.trim();
+        if (q.length < 3) { suggestions.style.display = 'none'; return; }
+        searchTimer = setTimeout(() => nominatimSearch(q), 400);
     });
 
-    // Handle marker drag with proper event listener
-    defaultLocationMarker.addListener('dragend', function () {
-        const position = defaultLocationMarker.position;
-        const lat = position.lat();
-        const lng = position.lng();
+    async function nominatimSearch(q) {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
+            const results = await res.json();
+            suggestions.innerHTML = '';
+            if (!results.length) { suggestions.style.display = 'none'; return; }
 
-        document.getElementById('default-latitude').value = lat;
-        document.getElementById('default-longitude').value = lng;
+            results.forEach(r => {
+                const li = document.createElement('li');
+                li.textContent = r.display_name;
+                li.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;';
+                li.addEventListener('mouseenter', () => li.style.background = '#f5f5f5');
+                li.addEventListener('mouseleave', () => li.style.background = '');
+                li.addEventListener('click', async () => {
+                    const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+                    defaultLocationMap.setView([lat, lng], 14);
+                    defaultLocationMarker.setLatLng([lat, lng]);
+                    suggestions.style.display = 'none';
+                    searchInput.value = '';
+                    setLatLng(lat, lng);
+                    showPopup(lat, lng, r.display_name);
+                });
+                suggestions.appendChild(li);
+            });
+            suggestions.style.display = 'block';
+        } catch (e) {
+            console.warn('Nominatim error:', e);
+        }
+    }
 
-        // Reverse geocode to get address
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({location: {lat: lat, lng: lng}}, function (results, status) {
-            if (status === 'OK' && results[0]) {
-                let content = `<div id="infowindow-content">
-                            <span id="place-displayname" class="title">Selected Location</span><br />
-                            <span id="place-address">${results[0].formatted_address}</span>
-                        </div>`;
-                updateDefaultLocationInfoWindow(content, {lat: lat, lng: lng});
-            }
-        });
-    });
-
-    // Handle map click to place marker
-    defaultLocationMap.addListener('click', function (event) {
-        const position = event.latLng;
-        const lat = position.lat();
-        const lng = position.lng();
-
-        defaultLocationMarker.position = position;
-        document.getElementById('default-latitude').value = lat;
-        document.getElementById('default-longitude').value = lng;
-
-        // Reverse geocode to get address
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({location: position}, function (results, status) {
-            if (status === 'OK' && results[0]) {
-                let content = `<div id="infowindow-content">
-                            <span id="place-displayname" class="title">Selected Location</span><br />
-                            <span id="place-address">${results[0].formatted_address}</span>
-                        </div>`;
-                updateDefaultLocationInfoWindow(content, position);
-            }
-        });
-    });
-
-    // Handle coordinate input changes
-    latInput.addEventListener('change', updateMarkerFromInputs);
-    lngInput.addEventListener('change', updateMarkerFromInputs);
-
-    // Update country restrictions when countries change
-    document.getElementById('select-countries').addEventListener('change', function () {
-        const selectedCountries = Array.from(this.querySelectorAll('option:checked')).map(option => option.value);
-        if (selectedCountries.length > 0) {
-            placeAutocomplete.countries = selectedCountries;
-        } else {
-            placeAutocomplete.countries = [];
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#settings-suggestions') && e.target !== searchInput) {
+            suggestions.style.display = 'none';
         }
     });
 
-    // Show initial marker info
-    if (latInput.value && lngInput.value) {
-        updateDefaultLocationInfoWindow(
-            '<div id="infowindow-content"><span class="title">Current Default Location</span></div>',
-            defaultLocationCenter
-        );
+    // ── Manual input sync ───────────────────────────────────────────────────
+    latEl?.addEventListener('change', syncMarkerFromInputs);
+    lngEl?.addEventListener('change', syncMarkerFromInputs);
+
+    // Show popup if existing location set
+    if (hasExisting) {
+        showPopup(startCenter[0], startCenter[1], 'Current default location');
     }
 }
 
-function updateMarkerFromInputs() {
+async function reverseAndShow(lat, lng) {
+    setLatLng(lat, lng);
+    try {
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+            { headers: { 'Accept-Language': 'en' } }
+        );
+        const r = await res.json();
+        showPopup(lat, lng, r.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    } catch (_) {
+        showPopup(lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
+}
+
+function syncMarkerFromInputs() {
     const lat = parseFloat(document.getElementById('default-latitude').value);
     const lng = parseFloat(document.getElementById('default-longitude').value);
-
     if (!isNaN(lat) && !isNaN(lng)) {
-        const position = {lat: lat, lng: lng};
-        defaultLocationMarker.position = position;
-        defaultLocationMap.setCenter(position);
-
-        // Update info window
-        updateDefaultLocationInfoWindow(
-            '<div id="infowindow-content"><span class="title">Manual Location Entry</span></div>',
-            position
-        );
+        defaultLocationMarker.setLatLng([lat, lng]);
+        defaultLocationMap.setView([lat, lng], 14);
+        showPopup(lat, lng, 'Manual location entry');
     }
 }
 
-function updateDefaultLocationInfoWindow(content, position) {
-    defaultLocationInfoWindow.setContent(content);
-    defaultLocationInfoWindow.setPosition(position);
-    defaultLocationInfoWindow.open({
-        map: defaultLocationMap,
-        anchor: defaultLocationMarker,
-        shouldFocus: false
-    });
+function setLatLng(lat, lng) {
+    const latEl = document.getElementById('default-latitude');
+    const lngEl = document.getElementById('default-longitude');
+    if (latEl) latEl.value = lat;
+    if (lngEl) lngEl.value = lng;
 }
 
-// Initialize map when page loads
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialize map
-    if (typeof google !== 'undefined' && google.maps) {
+function showPopup(lat, lng, label) {
+    defaultLocationMarker
+        .bindPopup(`<strong>${label}</strong><br><small style="color:#888">${lat.toFixed(5)}, ${lng.toFixed(5)}</small>`)
+        .openPopup();
+}
+
+// ── Boot ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('default-location-map')) {
         initDefaultLocationMap();
-    } else {
-        console.warn('Google Maps API not loaded. Make sure to include the Google Maps script.');
     }
 });
