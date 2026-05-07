@@ -1,0 +1,77 @@
+{
+    "version": "1.3.0",
+    "min_app_version": "1.2.0",
+    "run_migrations": true,
+    "notes": "v1.3.0: Added product add-ons, refer & earn, custom notifications, account deletion, plus improved authentication, verification, system updates, and bug fixes.",
+    "run_seeders": true,
+    "vendor_update": false,
+    "actions": [
+        {
+            "type": "add",
+            "source": "app",
+            "target": "app"
+        },
+        {
+            "type": "add",
+            "source": "config",
+            "target": "config"
+        },
+        {
+            "type": "add",
+            "source": "bootstrap/app.php",
+            "target": "bootstrap/app.php"
+        },
+        {
+            "type": "add",
+            "source": "database",
+            "target": "database"
+        },
+        {
+            "type": "add",
+            "source": "packages",
+            "target": "packages"
+        },
+        {
+            "type": "add",
+            "source": "resources",
+            "target": "resources"
+        },
+        {
+            "type": "add",
+            "source": "routes",
+            "target": "routes"
+        },
+        {
+            "type": "add",
+            "source": "public/installer",
+            "target": "public/installer"
+        },
+        {
+            "type": "add",
+            "source": "public/assets/admin",
+            "target": "public/assets/admin"
+        },
+        {
+            "type": "add",
+            "source": "public/assets/css",
+            "target": "public/assets/css"
+        },
+        {
+            "type": "add",
+            "source": "public/assets/js",
+            "target": "public/assets/js"
+        },
+        {
+            "type": "add",
+            "source": "public/assets/seller",
+            "target": "public/assets/seller"
+        }
+    ],
+    "commands": [
+        "config:clear",
+        "config:cache",
+        "route:clear",
+        "view:clear",
+        "view:cache"
+    ]
+}

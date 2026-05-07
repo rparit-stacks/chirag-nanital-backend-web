@@ -75,9 +75,16 @@ class DatabaseController extends Controller
             'password' => $details['password'] ?? null,
         ];
 
-        // NOTE: Do not write .env here — php artisan serve restarts on .env change and the
-        // next request to /install/final often returns 502. SESSION_DRIVER is applied in
-        // FinalController after the response is sent (see app()->terminating).
+
+        // ------------------------------------
+        // Update SESSION_DRIVER in .env
+        // ------------------------------------
+        $envPath = base_path('.env');
+        if (file_exists($envPath)) {
+            $envContent = file_get_contents($envPath);
+            $envContent = preg_replace('/SESSION_DRIVER=.*/', 'SESSION_DRIVER=database', $envContent);
+            file_put_contents($envPath, $envContent);
+        }
 
         return redirect()
             ->route('LaravelInstaller::final', $userDetails)

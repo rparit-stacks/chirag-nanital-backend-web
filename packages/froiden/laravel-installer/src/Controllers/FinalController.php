@@ -31,18 +31,6 @@ class FinalController extends Controller
             Log::error($e->getMessage());
         }
 
-        // Apply after HTML is sent so `php artisan serve` does not restart before /install/final
-        // completes (avoids 502 Bad Gateway on the redirect from database step).
-        app()->terminating(function () {
-            $envPath = base_path('.env');
-            if (! is_file($envPath)) {
-                return;
-            }
-            $envContent = file_get_contents($envPath);
-            $envContent = preg_replace('/SESSION_DRIVER=.*/', 'SESSION_DRIVER=database', $envContent);
-            file_put_contents($envPath, $envContent);
-        });
-
         return view('vendor.installer.finished', compact('user', 'details'));
     }
 }

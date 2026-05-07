@@ -51,13 +51,7 @@ class PermissionsChecker
      */
     private function getPermission($folder)
     {
-        $path = base_path($folder);
-
-        if (! is_dir($path)) {
-            return '0000';
-        }
-
-        return substr(sprintf('%o', fileperms($path)), -4);
+        return substr(sprintf('%o', fileperms(base_path($folder))), -4);
     }
 
     /**

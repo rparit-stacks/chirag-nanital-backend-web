@@ -36,8 +36,8 @@ use App\Http\Controllers\Payments\StripeController;
 use Illuminate\Support\Facades\Route;
 use function Pest\Laravel\get;
 
-include_once __DIR__ . '/delivery-boy-api.php';
-include_once __DIR__ . '/seller-api.php';
+include_once("delivery-boy-api.php");
+include_once("seller-api.php");
 
 // User Auth Routes
 Route::post('register', [AuthApiController::class, 'register'])->name('register');
@@ -253,7 +253,7 @@ Route::prefix('product-faqs')->name('product_faqs.')->group(function () {
 // featured sections
 Route::prefix('featured-sections')->name('featured-sections.')->group(function () {
     Route::get('/', [FeaturedSectionApiController::class, 'index'])->name('index');
-    Route::get('/search', [FeaturedSectionApiController::class, 'search'])->name('search');
+    Route::get('/search', [FeaturedSectionApiController::class, 'search'])->name('index');
     Route::get('/all', [FeaturedSectionApiController::class, 'all'])->name('all');
     Route::get('/types', [FeaturedSectionApiController::class, 'types'])->name('types');
     Route::get('/{slug}', [FeaturedSectionApiController::class, 'show'])->name('show');
@@ -281,7 +281,7 @@ Route::get('paystack/callback', [PaystackController::class, 'handleCallback'])->
 Route::post('paystack/refund', [PaystackController::class, 'refundPayment']);
 
 
-Route::post('flutterwave/webhook', [FlutterwaveController::class, 'handleWebhook'])->name('flutterwave.webhook');
+Route::post('flutterwave/webhook', [FlutterwaveController::class, 'handleWebhook'])->name('flutterwave.webhook');;
 
 Route::post('/test-fcm', [NotificationController::class, 'test']);
 Route::post('/test-fcms', [NotificationController::class, 'sendBulk']);

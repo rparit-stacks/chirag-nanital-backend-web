@@ -34,9 +34,6 @@ return Application::configure(basePath: dirname(__DIR__))
     // Register application and package service providers (Laravel 11/12 style)
     ->withProviders(require __DIR__ . '/providers.php')
     ->withMiddleware(function (Middleware $middleware) {
-        // Behind Nginx/SSL termination: correct scheme for asset() / url() (fixes broken CSS on HTTPS).
-        $middleware->trustProxies(at: '*');
-
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('admin/*') || $request->is('admin')) {
                 return route('admin.login');

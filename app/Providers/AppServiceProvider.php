@@ -98,8 +98,8 @@ class AppServiceProvider extends ServiceProvider
         // API docs security
         $this->configureScramble();
 
-        // Only force https when APP_URL is https; force http when APP_URL is http (HTTP-only servers).
-        $this->syncUrlSchemeWithAppUrl();
+        // Force HTTPS in production
+        $this->forceHttpsInProduction();
 
         // Register model observers safely
         $this->registerObservers();
@@ -174,17 +174,12 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Match generated URLs (asset(), url(), route()) to APP_URL scheme.
-     * Use https only when APP_URL is https; use http when APP_URL is http (no SSL).
+     * Force HTTPS scheme in production environment.
      */
-    private function syncUrlSchemeWithAppUrl(): void
+    private function forceHttpsInProduction(): void
     {
-        $url = (string) config('app.url', '');
-
-        if (str_starts_with($url, 'https://')) {
+        if ($this->app->environment('production')) {
             URL::forceScheme('https');
-        } elseif (str_starts_with($url, 'http://')) {
-            URL::forceScheme('http');
         }
     }
 
