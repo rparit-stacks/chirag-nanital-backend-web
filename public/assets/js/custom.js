@@ -1,5 +1,15 @@
-const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+function getCsrfToken() {
+    const m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.getAttribute('content') || '' : '';
+}
+
+const csrfToken = getCsrfToken();
 const panel = document.getElementById('panel') ? document.getElementById('panel').getAttribute('data-panel') : 'admin';
+
+if (typeof axios !== 'undefined') {
+    axios.defaults.withCredentials = true;
+    axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+}
 
 const root = getComputedStyle(document.documentElement);
 const primaryColor = root.getPropertyValue('--tblr-primary').trim();
@@ -17,17 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalButtonContent = submitButton.innerHTML;
             submitButton.innerHTML = `<div class="spinner-border text-white me-2" role="status"><span class="visually-hidden">Loading...</span></div> ${originalButtonContent}`;
 
-            // Prepare headers
+            // Prepare headers (explicit CSRF avoids 419 when cookie/session edge cases)
             const headers = {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
             };
 
             // Prepare axios config
             const config = {
                 method: method,
                 url: action,
-                headers: headers
+                headers: headers,
+                withCredentials: true,
             };
 
             if (method === 'GET') {
@@ -124,21 +136,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitButton = loginForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         const originalButtonContent = submitButton.innerHTML;
-        console.log(originalButtonContent);
         submitButton.innerHTML = `<div class="spinner-border text-white me-2" role="status"><span class="visually-hidden">Loading...</span></div> ${originalButtonContent}`;
 
 
-        // Prepare headers
+        // Prepare headers (explicit CSRF + body _token for Laravel)
         const headers = {
             'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': getCsrfToken(),
         };
 
         // Prepare axios config
         const config = {
             method: 'POST',
             url: action,
-            headers: headers
+            headers: headers,
+            withCredentials: true,
         };
         config.data = formData;
 
@@ -165,6 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(function (error) {
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonContent;
+                if (error.response && error.response.status === 419) {
+                    return Toast.fire({
+                        icon: "error",
+                        title: "Session expired. Please refresh the page and try again.",
+                    });
+                }
                 if (error.response && error.response.data && error.response.data.message) {
                     return Toast.fire({
                         icon: "error",

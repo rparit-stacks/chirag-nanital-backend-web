@@ -4,7 +4,8 @@ import {getMessaging, getToken, onMessage} from "https://www.gstatic.com/firebas
 async function initFirebase() {
     try {
         // 🔹 Check if config is cached
-        let firebaseConfig = JSON.parse(localStorage.getItem('firebase_config'));
+        const rawConfig = localStorage.getItem('firebase_config');
+        let firebaseConfig = rawConfig ? JSON.parse(rawConfig) : null;
 
         // 🔹 If not found, call API once
         if (!firebaseConfig) {
@@ -13,9 +14,20 @@ async function initFirebase() {
             localStorage.setItem('firebase_config', JSON.stringify(firebaseConfig));
         }
 
+        if (!firebaseConfig || !firebaseConfig.projectId) {
+            console.warn('Firebase: missing projectId in config; skipping init.');
+            return;
+        }
+
         // 🔹 Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const messaging = getMessaging(app);
+        let messaging;
+        try {
+            messaging = getMessaging(app);
+        } catch (e) {
+            console.warn('Firebase messaging not available in this browser/context.', e);
+            return;
+        }
 
         // 🔹 Ask for notification permission
         const permission = await Notification.requestPermission();
@@ -26,7 +38,13 @@ async function initFirebase() {
 
         // 🔹 Fetch FCM token
         const vapidKey = firebaseConfig.vapidKey;
-        const token = await getToken(messaging, {vapidKey});
+        let token;
+        try {
+            token = await getToken(messaging, {vapidKey});
+        } catch (e) {
+            console.warn('Firebase FCM token skipped:', e.message || e);
+            return;
+        }
         localStorage.setItem('fcm_token', token);
 
         // 🔹 Listen for messages when tab is active
