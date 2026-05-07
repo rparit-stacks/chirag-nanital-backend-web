@@ -60,10 +60,17 @@ class LicenseController extends Controller
             'LICENSE_TOKEN="'.$token.'"' . "\n" .
             'LICENSE_SIGNATURE="'.$signature.'"' . "\n";
 
-        try {
-            file_put_contents($envPath, rtrim($cleanString, "\n")."\n".$licenseBlock);
-        } catch (\Throwable $e) {
-            return Reply::error('License Error: Failed to write license to environment file.');
+        if (! is_writable($envPath)) {
+            return Reply::error(
+                'License Error: .env is not writable by the web server (www-data). Fix: sudo chown www-data:www-data '.$envPath.' && sudo chmod 664 '.$envPath
+            );
+        }
+
+        $written = @file_put_contents($envPath, rtrim($cleanString, "\n")."\n".$licenseBlock, LOCK_EX);
+        if ($written === false) {
+            return Reply::error(
+                'License Error: Failed to write license to environment file. Fix permissions on '.$envPath.' (www-data must be able to write).'
+            );
         }
 
         return Reply::redirect(route('LaravelInstaller::requirements'), 'License verified successfully.');
